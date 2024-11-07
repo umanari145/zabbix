@@ -1,0 +1,46 @@
+version: "3"
+services:
+  zabbix_db:
+    image: mysql:5.7
+    environment:
+      - MYSQL_DATABASE=zabbix_db
+      - MYSQL_USER=zabbix_user
+      - MYSQL_PASSWORD=zabbix_pass
+      - MYSQL_ROOT_PASSWORD=zabbix_root_pass
+  zabbix_server:
+    image: zabbix/zabbix-server-mysql:centos-4.4.1
+    environment:
+      - DB_SERVER_HOST=zabbix_db
+      - MYSQL_DATABASE=zabbix_db
+      - MYSQL_USER=zabbix_user
+      - MYSQL_PASSWORD=zabbix_pass
+      - MYSQL_ROOT_PASSWORD=zabbix_root_pass
+      - ZBX_DEBUGLEVEL=3
+    ports:
+      - "10051:10051"
+    links:
+      - zabbix_db
+  zabbix_web:
+    image: zabbix/zabbix-web-apache-mysql:centos-4.4.1
+    environment:
+      - ZBX_SERVER_HOST=zabbix_server
+      - DB_SERVER_HOST=zabbix_db
+      - MYSQL_DATABASE=zabbix_db
+      - MYSQL_USER=zabbix_user
+      - MYSQL_PASSWORD=zabbix_pass
+      - MYSQL_ROOT_PASSWORD=zabbix_root_pass
+      - PHP_TZ=Asia/Tokyo
+    ports:
+      - 38080:80
+    links:
+      - zabbix_server
+      - zabbix_db
+  zabbix_agent:
+    image: zabbix/zabbix-agent:centos-4.4.1
+    privileged: true
+    environment:
+      - ZBX_SERVER_HOST=zabbix_server
+    expose:
+      - "10050"
+    links:
+      - zabbix_server
